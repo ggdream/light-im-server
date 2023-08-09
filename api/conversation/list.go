@@ -16,6 +16,7 @@ type pullResModel struct {
 type pullResModelItem struct {
 	SenderID       string `json:"sender_id"`
 	ReceiverID     string `json:"receiver_id"`
+	UserID         string `json:"user_id"`
 	ConversationID string `json:"conversation_id"`
 	Type           uint8  `json:"type"`
 	Text           string `json:"text"`
@@ -47,13 +48,16 @@ func PullContorller(c *gin.Context) {
 	items := make([]pullResModelItem, 0, len(res))
 	for _, v := range res {
 		var isSelf uint8 = 0
+		userId := v.SenderID
 		if v.SenderID == userId {
 			isSelf = 1
+			userId = v.ReceiverID
 		}
 
 		items = append(items, pullResModelItem{
 			SenderID:       v.SenderID,
 			ReceiverID:     v.ReceiverID,
+			UserID:         userId,
 			ConversationID: v.ConversationID,
 			Type:           v.Type,
 			Text:           v.Text,
@@ -61,7 +65,7 @@ func PullContorller(c *gin.Context) {
 			Audio:          v.Audio,
 			Video:          v.Video,
 			Custom:         v.Custom,
-			IsSelf: isSelf,
+			IsSelf:         isSelf,
 			IsRead: func() uint8 {
 				if v.Unread == 0 {
 					return 0

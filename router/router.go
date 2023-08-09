@@ -17,8 +17,11 @@ func Set(rg *gin.RouterGroup) {
 		connectGroup.GET("/im", socket.IM)
 		connectGroup.POST("/logout", auth.LogoutController)
 
+		userGroup := clientGroup.Group("/user")
+		userGroup.POST("/profile", user.ProfileController) // c s
+
 		messageGroup := clientGroup.Group("/message")
-		messageGroup.POST("/pull", message.PullController)     // c
+		messageGroup.POST("/pull", message.PullController)        // c
 		messageGroup.POST("/mark", message.MarkController)        // c
 		messageGroup.POST("/send", message.SendController(false)) // c s
 
@@ -32,12 +35,13 @@ func Set(rg *gin.RouterGroup) {
 		authGroup := serverGroup.Group("/auth")
 		authGroup.POST("/sign", auth.SignController) // s
 
-		userGroup := rg.Group("/user")
-		userGroup.POST("/create", user.CreateController) // s
-		userGroup.POST("/delete", user.DeleteController) // s
-		userGroup.POST("/update", user.UpdateController) // s
+		userGroup := serverGroup.Group("/user")
+		userGroup.POST("/create", user.CreateController)   // s
+		userGroup.POST("/delete", user.DeleteController)   // s
+		userGroup.POST("/update", user.UpdateController)   // s
+		userGroup.POST("/profile", user.ProfileController) // c s
 
-		messageGroup := rg.Group("/message")
+		messageGroup := serverGroup.Group("/message")
 		messageGroup.POST("/send", message.SendController(true)) // c s
 	}
 }

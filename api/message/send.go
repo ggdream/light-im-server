@@ -39,6 +39,7 @@ type sendReqModel struct {
 type sendResModel struct {
 	SenderID       string `json:"sender_id"`
 	ReceiverID     string `json:"receiver_id"`
+	UserID         string `json:"user_id"`
 	ConversationID string `json:"conversation_id"`
 	Type           uint8  `json:"type"`
 	Text           string `json:"text"`
@@ -112,6 +113,7 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 		data1 := &packet.MessagePktData{
 			SenderID:       senderId,
 			ReceiverID:     *form.ReceiverID,
+			UserID:         *form.ReceiverID,
 			ConversationID: doc.ConversationID,
 			Type:           *form.Type,
 			Text:           form.Text,
@@ -132,6 +134,7 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 		data2 := &packet.MessagePktData{
 			SenderID:       senderId,
 			ReceiverID:     *form.ReceiverID,
+			UserID:         senderId,
 			ConversationID: doc.ConversationID,
 			Type:           *form.Type,
 			Text:           form.Text,

@@ -23,6 +23,7 @@ type pullResModel struct {
 type pullResModelItem struct {
 	SenderID       string `json:"sender_id"`
 	ReceiverID     string `json:"receiver_id"`
+	UserID         string `json:"user_id"`
 	ConversationID string `json:"conversation_id"`
 	Type           uint8  `json:"type"`
 	Text           string `json:"text"`
@@ -65,10 +66,12 @@ func PullController(c *gin.Context) {
 
 	for i, v := range items {
 		if v.SenderID == userId {
+			items[i].UserID = v.ReceiverID
 			items[i].IsPeerRead = items[i].IsRead
 			items[i].IsRead = 1
 			items[i].IsSelf = 1
 		} else {
+			items[i].UserID = v.SenderID
 			items[i].IsPeerRead = 1
 			items[i].IsSelf = 0
 		}
