@@ -30,7 +30,7 @@ func DeleteController(c *gin.Context) {
 	}
 
 	ca := cache.AuthToken{}
-	_ = ca.Del(*form.UserID, 0)
+	_ = ca.Del(*form.UserID)
 
 	errno.NewS(nil).Reply(c)
 }

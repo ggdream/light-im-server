@@ -4,6 +4,16 @@ type PingPktData struct{}
 
 type PongPktData struct{}
 
+type AuthPktData struct {
+	UserID string `json:"user_id"`
+	Token  string `json:"token"`
+}
+
+type PassPktData struct {
+	Code uint16 `json:"code"`
+	Desc string `json:"desc"`
+}
+
 type MessagePktData struct {
 	SenderID       string `json:"sender_id"`
 	ReceiverID     string `json:"receiver_id"`
@@ -14,7 +24,9 @@ type MessagePktData struct {
 	Audio          string `json:"audio"`
 	Video          string `json:"video"`
 	Custom         string `json:"custom"`
+	IsSelf         uint8  `json:"is_self"`
 	IsRead         uint8  `json:"is_read"`
+	IsPeerRead     uint8  `json:"is_peer_read"`
 	Timestamp      int64  `json:"timestamp"`
 	Sequence       int64  `json:"sequence"`
 	CreateAt       int64  `json:"create_at"`

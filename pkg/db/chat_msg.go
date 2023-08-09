@@ -86,12 +86,6 @@ func (m *ChatMsgDoc) List(senderId, receiverId string, sequence, number int64) (
 	if err != nil {
 		return nil, err
 	}
-	
-	for i, v := range res {
-		if v.SenderID == receiverId {
-			res[i].IsRead = 1
-		}
-	}
 
 	return res, nil
 }

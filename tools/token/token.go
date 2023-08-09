@@ -17,13 +17,12 @@ var (
 
 type customClaims struct {
 	UserID string `json:"uid"`
-	Role   uint8  `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func Generate(key []byte, userId string, role uint8) (string, int64, error) {
+func Generate(key []byte, userId string) (string, int64, error) {
 	claims := customClaims{
-		userId, role,
+		userId,
 		jwt.RegisteredClaims{
 			Issuer:    "light-im",
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -41,7 +40,7 @@ func Generate(key []byte, userId string, role uint8) (string, int64, error) {
 	return tkStr, claims.ExpiresAt.UnixMilli(), nil
 }
 
-func Parse(key []byte, tkStr string) (string, uint8, error) {
+func Parse(key []byte, tkStr string) (string, error) {
 	tk, err := jwt.Parse(tkStr, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrTokenSignedMethod
@@ -49,14 +48,14 @@ func Parse(key []byte, tkStr string) (string, uint8, error) {
 		return key, nil
 	})
 	if err != nil {
-		return "", 0, err
+		return "", err
 	}
 
 	claims, ok := tk.Claims.(jwt.MapClaims)
 	if ok && tk.Valid {
 		// 校验成功
-		return claims["uid"].(string), uint8(claims["role"].(float64)), nil
+		return claims["uid"].(string), nil
 	}
 
-	return "", 0, tk.Claims.Valid()
+	return "", tk.Claims.Valid()
 }

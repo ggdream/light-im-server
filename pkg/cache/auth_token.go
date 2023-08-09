@@ -11,27 +11,27 @@ type AuthToken struct{}
 
 func NewAuthToken() *AuthToken { return new(AuthToken) }
 
-func (c *AuthToken) Set(userId string, role uint8, token string, expireAt int64) error {
+func (c *AuthToken) Set(userId string, token string, expireAt int64) error {
 	ctx, cancel := withTimeout()
 	defer cancel()
 
-	return client.SetArgs(ctx, c.joinName(userId, role), token, redis.SetArgs{
+	return client.SetArgs(ctx, c.joinName(userId), token, redis.SetArgs{
 		ExpireAt: time.UnixMilli(expireAt),
 	}).Err()
 }
 
-func (c *AuthToken) Get(userId string, role uint8) (string, error) {
+func (c *AuthToken) Get(userId string) (string, error) {
 	ctx, cancel := withTimeout()
 	defer cancel()
 
-	return client.Get(ctx, c.joinName(userId, role)).Result()
+	return client.Get(ctx, c.joinName(userId)).Result()
 }
 
-func (c *AuthToken) Verify(userId string, role uint8, token string) (bool, error) {
+func (c *AuthToken) Verify(userId string, token string) (bool, error) {
 	ctx, cancel := withTimeout()
 	defer cancel()
 
-	tk, err := client.Get(ctx, c.joinName(userId, role)).Result()
+	tk, err := client.Get(ctx, c.joinName(userId)).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return false, nil
@@ -43,13 +43,13 @@ func (c *AuthToken) Verify(userId string, role uint8, token string) (bool, error
 	return tk == token, nil
 }
 
-func (c *AuthToken) Del(userId string, role uint8) error {
+func (c *AuthToken) Del(userId string) error {
 	ctx, cancel := withTimeout()
 	defer cancel()
 
-	return client.Unlink(ctx, c.joinName(userId, role)).Err()
+	return client.Unlink(ctx, c.joinName(userId)).Err()
 }
 
-func (c *AuthToken) joinName(userId string, role uint8) string {
-	return fmt.Sprintf("lim:auth:token:%d:%s", role, userId)
+func (c *AuthToken) joinName(userId string) string {
+	return fmt.Sprintf("lim:auth:token:%s", userId)
 }

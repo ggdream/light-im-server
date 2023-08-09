@@ -20,7 +20,7 @@ func AuthToken() gin.HandlerFunc {
 	)
 
 	return func(c *gin.Context) {
-		if exist.ExistInSlice(c.Request.URL.Path, []string{"/auth/login"}) {
+		if exist.ExistInSlice(c.Request.URL.Path, []string{"/auth/sign", "/im"}) {
 			c.Next()
 
 			return
@@ -35,7 +35,7 @@ func AuthToken() gin.HandlerFunc {
 			return
 		}
 
-		userId, role, err := token.Parse(config.GetApp().TokenKey, header.Token)
+		userId, err := token.Parse(config.GetApp().TokenKey, header.Token)
 		if err != nil {
 			switch err {
 			case token.ErrTokenExpired:
@@ -48,7 +48,7 @@ func AuthToken() gin.HandlerFunc {
 			return
 		}
 
-		isPass, err := authTokenCa.Verify(userId, role, header.Token)
+		isPass, err := authTokenCa.Verify(userId, header.Token)
 		if err != nil {
 			errno.NewF(errno.BaseErrRedis, err.Error(), errno.ErrRedis).Reply(c)
 			return
@@ -57,7 +57,6 @@ func AuthToken() gin.HandlerFunc {
 			errno.NewF(errno.BaseErrInvalid, "登录凭证失效", errno.ErrJWT).Reply(c)
 			return
 		}
-
 
 		config.CtxKeyManager.SetUserID(c, userId)
 		c.Next()

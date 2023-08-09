@@ -13,7 +13,6 @@ type updateReqModel struct {
 	Nickname string  `json:"nickname"`
 }
 
-
 func UpdateController(c *gin.Context) {
 	var (
 		form updateReqModel

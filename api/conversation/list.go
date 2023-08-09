@@ -8,11 +8,12 @@ import (
 	"lim/pkg/errno"
 )
 
-type listResModel struct {
-	Items []listResModelItem `json:"items"`
+type pullResModel struct {
+	Count int                `json:"count"`
+	Items []pullResModelItem `json:"items"`
 }
 
-type listResModelItem struct {
+type pullResModelItem struct {
 	SenderID       string `json:"sender_id"`
 	ReceiverID     string `json:"receiver_id"`
 	ConversationID string `json:"conversation_id"`
@@ -22,6 +23,7 @@ type listResModelItem struct {
 	Audio          string `json:"audio"`
 	Video          string `json:"video"`
 	Custom         string `json:"custom"`
+	IsSelf         uint8  `json:"is_self"`
 	IsRead         uint8  `json:"is_read"`
 	Unread         int64  `json:"unread"`
 	Timestamp      int64  `json:"timestamp"`
@@ -29,7 +31,7 @@ type listResModelItem struct {
 	CreateAt       int64  `json:"create_at"`
 }
 
-func ListContorller(c *gin.Context) {
+func PullContorller(c *gin.Context) {
 	var (
 		ca  cache.ChatConv
 		err error
@@ -42,9 +44,14 @@ func ListContorller(c *gin.Context) {
 		return
 	}
 
-	items := make([]listResModelItem, 0, len(res))
+	items := make([]pullResModelItem, 0, len(res))
 	for _, v := range res {
-		items = append(items, listResModelItem{
+		var isSelf uint8 = 0
+		if v.SenderID == userId {
+			isSelf = 1
+		}
+
+		items = append(items, pullResModelItem{
 			SenderID:       v.SenderID,
 			ReceiverID:     v.ReceiverID,
 			ConversationID: v.ConversationID,
@@ -54,6 +61,7 @@ func ListContorller(c *gin.Context) {
 			Audio:          v.Audio,
 			Video:          v.Video,
 			Custom:         v.Custom,
+			IsSelf: isSelf,
 			IsRead: func() uint8 {
 				if v.Unread == 0 {
 					return 0
@@ -68,7 +76,8 @@ func ListContorller(c *gin.Context) {
 		})
 	}
 
-	ret := &listResModel{
+	ret := &pullResModel{
+		Count: len(items),
 		Items: items,
 	}
 	errno.NewS(ret).Reply(c)

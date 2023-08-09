@@ -30,16 +30,22 @@ func (p *Packet) Encode() []byte {
 	return data
 }
 
-func (p *Packet) Decode(data []byte) error {
+func (p *Packet) Decode(data []byte) (any, error) {
 	err := json.Unmarshal(data, p)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	var body any
 	switch p.Type {
 	case PingPacketType:
-		return nil
+		body = &PingPktData{}
+	case AuthPacketType:
+		body = &AuthPktData{}
 	default:
-		return ErrInvalidPacketType
+		return nil, ErrInvalidPacketType
 	}
+
+	err = json.Unmarshal(*p.Data, &body)
+	return &body, err
 }

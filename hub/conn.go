@@ -1,9 +1,10 @@
 package hub
 
 import (
+	"context"
 	"sync/atomic"
 	"time"
-	
+
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
@@ -17,6 +18,7 @@ var (
 type Conn struct {
 	userId             string
 	conn               *websocket.Conn
+	cancelFunc         context.CancelFunc
 	timer              *time.Timer
 	wChannel, rChannel chan []byte
 	signal             int32
@@ -29,7 +31,7 @@ func NewConn(userId string, conn *websocket.Conn) *Conn {
 	}
 }
 
-func (c *Conn) Dispatch() {
+func (c *Conn) Dispatch(ctx context.Context) {
 	c.timer = time.NewTimer(time.Second * 15)
 
 	go func() {
@@ -51,6 +53,8 @@ func (c *Conn) Dispatch() {
 
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case <-c.timer.C:
 			return
 		case data, ok := <-c.wChannel:
@@ -84,7 +88,8 @@ func (c *Conn) Write(data []byte) error {
 
 func (c *Conn) Read(data []byte) {
 	pkt := packet.New()
-	if err := pkt.Decode(data); err != nil {
+	_, err := pkt.Decode(data)
+	if err != nil {
 		c.Close()
 		return
 	}

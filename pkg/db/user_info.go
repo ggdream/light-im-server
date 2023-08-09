@@ -10,7 +10,6 @@ import (
 
 type UserInfoDoc struct {
 	UserID   string `json:"user_id" bson:"user_id"`
-	Role     uint8  `json:"role" bson:"role"`
 	Nickname string `json:"nickname" bson:"nickname"`
 	Avatar   string `json:"avatar" bson:"avatar"`
 	CreateAt string `json:"create_at" bson:"create_at"`
@@ -30,7 +29,6 @@ func (m *UserInfoDoc) Create(userId, nickname, avatar string) error {
 	}
 
 	m.UserID = userId
-	m.Role = 0
 	m.Nickname = nickname
 	m.Avatar = avatar
 	m.CreateAt = time.Now().Format(time.RFC3339)

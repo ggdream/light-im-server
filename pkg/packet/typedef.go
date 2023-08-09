@@ -9,7 +9,9 @@ type (
 const (
 	PingPacketType    PacketType = 1
 	PongPacketType    PacketType = 2
-	MessagePacketType PacketType = 3
+	AuthPacketType    PacketType = 3
+	PassPacketType    PacketType = 4
+	MessagePacketType PacketType = 5
 )
 
 var (

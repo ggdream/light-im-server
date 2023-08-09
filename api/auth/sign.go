@@ -10,18 +10,18 @@ import (
 	"lim/tools/token"
 )
 
-type loginReqModel struct {
+type signReqModel struct {
 	UserID *string `json:"user_id" binding:"required"`
 }
 
-type loginResModel struct {
+type signResModel struct {
 	Token    string `json:"token"`
 	ExpireAt int64  `json:"expire_at"`
 }
 
-func LoginController(c *gin.Context) {
+func SignController(c *gin.Context) {
 	var (
-		form loginReqModel
+		form signReqModel
 		err  error
 	)
 	if err = c.ShouldBindJSON(&form); err != nil {
@@ -37,16 +37,16 @@ func LoginController(c *gin.Context) {
 	}
 
 	tokenKey := config.GetApp().TokenKey
-	tk, expireAt, _ := token.Generate(tokenKey, *form.UserID, 0)
+	tk, expireAt, _ := token.Generate(tokenKey, *form.UserID)
 
 	ca := cache.AuthToken{}
-	err = ca.Set(*form.UserID, 0, tk, expireAt)
+	err = ca.Set(*form.UserID, tk, expireAt)
 	if err != nil {
 		errno.NewF(errno.BaseErrRedis, err.Error(), errno.ErrAuthLoginFailed).Reply(c)
 		return
 	}
 
-	ret := &loginResModel{
+	ret := &signResModel{
 		Token:    tk,
 		ExpireAt: expireAt,
 	}
