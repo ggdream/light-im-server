@@ -75,6 +75,7 @@ func (m *Mongo) SearchOne(collection string, filter interface{}, opt *options.Fi
 func (m *Mongo) SearchMany(collection string, filter interface{}, opts ...*options.FindOptions) (*mongo.Cursor, error) {
 	ctx, cancel := context.WithTimeout(m.context, m.timeout*2)
 	defer cancel()
+
 	return m.client.Database(m.database).Collection(collection).Find(ctx, filter, opts...)
 }
 
@@ -120,6 +121,7 @@ func (m *Mongo) InsertAll(collection string, documents []interface{}) error {
 func (m *Mongo) DeleteAll(collection string) error {
 	ctx, cancel := context.WithTimeout(m.context, m.timeout)
 	defer cancel()
+
 	_, err := m.client.Database(m.database).Collection(collection).DeleteMany(ctx, bson.D{})
 	return err
 }
@@ -127,6 +129,14 @@ func (m *Mongo) DeleteAll(collection string) error {
 func (m *Mongo) Delete(collection string, d bson.D) error {
 	ctx, cancel := context.WithTimeout(m.context, m.timeout)
 	defer cancel()
+
 	_, err := m.client.Database(m.database).Collection(collection).DeleteOne(ctx, d)
 	return err
+}
+
+func (m *Mongo) Count(collection string, f bson.M) (int64, error) {
+	ctx, cancel := context.WithTimeout(m.context, m.timeout)
+	defer cancel()
+
+	return m.client.Database(m.database).Collection(collection).CountDocuments(ctx, f)
 }

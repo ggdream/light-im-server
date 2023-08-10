@@ -129,7 +129,7 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			CreateAt:       doc.CreateTs,
 		}
 		pkt1.Set(packet.MessagePacketType, data1)
-		_ = hub.Write2Conn(senderId, pkt1)
+		err = hub.Write2Conn(senderId, pkt1)
 		pkt2 := packet.New()
 		data2 := &packet.MessagePktData{
 			SenderID:       senderId,
@@ -150,7 +150,7 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			CreateAt:       doc.CreateTs,
 		}
 		pkt2.Set(packet.MessagePacketType, data2)
-		_ = hub.Write2Conn(*form.ReceiverID, pkt2)
+		err = hub.Write2Conn(*form.ReceiverID, pkt2)
 
 		ret := &sendResModel{
 			SenderID:       senderId,

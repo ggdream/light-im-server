@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"unsafe"
+
 	"github.com/gin-gonic/gin"
 
 	"lim/config"
@@ -35,7 +37,8 @@ func AuthToken() gin.HandlerFunc {
 			return
 		}
 
-		userId, err := token.Parse(config.GetApp().TokenKey, header.Token)
+		tokenKey := unsafe.Slice(unsafe.StringData(config.GetApp().TokenKey), len(config.GetApp().TokenKey))
+		userId, err := token.Parse(tokenKey, header.Token)
 		if err != nil {
 			switch err {
 			case token.ErrTokenExpired:

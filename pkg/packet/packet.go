@@ -47,5 +47,5 @@ func (p *Packet) Decode(data []byte) (any, error) {
 	}
 
 	err = json.Unmarshal(*p.Data, &body)
-	return &body, err
+	return body, err
 }

@@ -2,7 +2,7 @@ package config
 
 type AppConfig struct {
 	Addr     string     `yaml:"addr"`
-	TokenKey []byte     `yaml:"token_key"`
+	TokenKey string     `yaml:"token_key"`
 	TLS      *TLSConfig `yaml:"tls"`
 }
 

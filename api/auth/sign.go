@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"unsafe"
+
 	"github.com/gin-gonic/gin"
 
 	"lim/config"
@@ -36,7 +38,7 @@ func SignController(c *gin.Context) {
 		return
 	}
 
-	tokenKey := config.GetApp().TokenKey
+	tokenKey := unsafe.Slice(unsafe.StringData(config.GetApp().TokenKey), len(config.GetApp().TokenKey))
 	tk, expireAt, _ := token.Generate(tokenKey, *form.UserID)
 
 	ca := cache.AuthToken{}

@@ -28,7 +28,7 @@ func MarkController(c *gin.Context) {
 	doc := db.ChatMsgDoc{}
 	err = doc.MarkAsRead(*form.UserID, userId, *form.Sequence)
 	if err != nil {
-		errno.NewF(errno.BaseErrMongo, err.Error(), errno.ErrAuthLoginFailed).Reply(c)
+		errno.NewF(errno.BaseErrMongo, err.Error(), errno.ErrChatMsgMarkFailed).Reply(c)
 		return
 	}
 

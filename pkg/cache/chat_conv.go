@@ -27,11 +27,19 @@ func (c *ChatConv) Add(senderId, receiverId string) error {
 	defer cancel()
 
 	_, err := client.Pipelined(ctx, func(p redis.Pipeliner) error {
-		err := p.HSet(ctx, c.joinName(senderId), c).Err()
+		z1 := redis.Z{
+			Score:  float64(c.CreateAt),
+			Member: receiverId,
+		}
+		err := p.ZAdd(ctx, c.joinName(senderId), z1).Err()
 		if err != nil {
 			return err
 		}
-		err = p.HSet(ctx, c.joinName(receiverId), c).Err()
+		z2 := redis.Z{
+			Score:  float64(c.CreateAt),
+			Member: senderId,
+		}
+		err = p.ZAdd(ctx, c.joinName(receiverId), z2).Err()
 		if err != nil {
 			return err
 		}
@@ -46,7 +54,7 @@ func (c *ChatConv) Add(senderId, receiverId string) error {
 			return err
 		}
 
-		return p.HIncrBy(ctx, c.joinName(receiverId), "unread", 1).Err()
+		return p.HIncrBy(ctx, c.joinName1(receiverId, senderId), "unread", 1).Err()
 	})
 	return err
 }
@@ -68,7 +76,7 @@ func (c *ChatConv) Del(userId, conversationId string) error {
 			return err
 		}
 
-		return p.HDel(ctx, c.joinName(userId), conversationId).Err()
+		return p.ZRem(ctx, c.joinName(userId), conversationId).Err()
 	})
 	return err
 }
@@ -77,7 +85,7 @@ func (c *ChatConv) List(userId string) ([]ChatConv, error) {
 	ctx, cancel := withTimeout()
 	defer cancel()
 
-	res, err := client.HGetAll(ctx, c.joinName(userId)).Result()
+	res, err := client.ZRevRange(ctx, c.joinName(userId), 0, -1).Result()
 	if err != nil {
 		return nil, err
 	}

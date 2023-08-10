@@ -29,8 +29,17 @@ func New() (*App, error) {
 		return nil, err
 	}
 
+	err = db.Init()
+	if err != nil {
+		return nil, err
+	}
+	err = cache.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	r := gin.New()
-	r.Use(gin.Recovery(), gin.Logger(), middleware.Logger(), middleware.Cors(), middleware.AuthToken())
+	r.Use(gin.Recovery(), gin.Logger(), middleware.Logger(), middleware.Cors())
 	router.Set(r.Group("/api"))
 
 	return &App{

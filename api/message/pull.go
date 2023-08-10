@@ -36,7 +36,7 @@ type pullResModelItem struct {
 	IsPeerRead     uint8  `json:"is_peer_read"`
 	Timestamp      int64  `json:"timestamp"`
 	Sequence       int64  `json:"sequence"`
-	CreateAt       int64  `json:"create_at" copier:"cts"`
+	CreateAt       int64  `json:"create_at" copier:"Cts"`
 }
 
 func PullController(c *gin.Context) {

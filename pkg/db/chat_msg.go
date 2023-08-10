@@ -22,7 +22,7 @@ type ChatMsgDoc struct {
 	IsRead         uint8  `json:"is_read" bson:"is_read"`
 	Timestamp      int64  `json:"timestamp" bson:"timestamp"`
 	Sequence       int64  `json:"sequence" bson:"sequence"`
-	CreateTs       int64  `json:"create_ts" bson:"create_ts" copier:"cts"`
+	CreateTs       int64  `json:"create_ts" bson:"create_ts" copier:"Cts"`
 	CreateAt       string `json:"create_at" bson:"create_at"`
 	DeleteAt       string `json:"delete_at" bson:"delete_at"`
 }
@@ -55,7 +55,9 @@ func (m *ChatMsgDoc) MarkAsRead(senderId, receiverId string, sequence int64) err
 		},
 		bson.D{
 			{
-				Key: "is_read", Value: 1,
+				Key: "$set", Value: bson.M{
+					"is_read": 1,
+				},
 			},
 		},
 	)
@@ -88,6 +90,13 @@ func (m *ChatMsgDoc) List(senderId, receiverId string, sequence, number int64) (
 	}
 
 	return res, nil
+}
+
+func (m *ChatMsgDoc) CountUnrad(userId string) (int64, error) {
+	return client.Count(m.DocName(), bson.M{
+		"receiver_id": userId,
+		"is_read": 0,
+	})
 }
 
 func (m *ChatMsgDoc) genCID(a, b string) string {

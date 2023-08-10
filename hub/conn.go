@@ -2,6 +2,7 @@ package hub
 
 import (
 	"context"
+	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -24,15 +25,16 @@ type Conn struct {
 	signal             int32
 }
 
-func NewConn(userId string, conn *websocket.Conn) *Conn {
+func NewConn(conn *websocket.Conn) *Conn {
 	return &Conn{
-		userId: userId,
 		conn:   conn,
+		wChannel: make(chan []byte, 1 << 4),
+		rChannel: make(chan []byte, 1 << 4),
 	}
 }
 
 func (c *Conn) Dispatch(ctx context.Context) {
-	c.timer = time.NewTimer(time.Second * 15)
+	c.timer = time.NewTimer(time.Second * 30)
 
 	go func() {
 		for {
@@ -58,6 +60,7 @@ func (c *Conn) Dispatch(ctx context.Context) {
 		case <-c.timer.C:
 			return
 		case data, ok := <-c.wChannel:
+			fmt.Println(string(data))
 			if !ok {
 				return
 			}
@@ -71,7 +74,14 @@ func (c *Conn) Dispatch(ctx context.Context) {
 				return
 			}
 
-			_ = c.timer.Reset(time.Second * 15)
+			if !c.timer.Stop() {
+				select {
+				case <-c.timer.C:
+				default:
+				}
+			}
+			_ = c.timer.Reset(time.Second * 30)
+
 			go c.Read(data)
 		}
 	}
@@ -82,6 +92,7 @@ func (c *Conn) Write(data []byte) error {
 		return ErrChannelClosed
 	}
 
+	fmt.Println(string(data))
 	c.wChannel <- data
 	return nil
 }
@@ -90,7 +101,6 @@ func (c *Conn) Read(data []byte) {
 	pkt := packet.New()
 	_, err := pkt.Decode(data)
 	if err != nil {
-		c.Close()
 		return
 	}
 

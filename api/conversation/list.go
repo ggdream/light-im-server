@@ -48,16 +48,16 @@ func PullContorller(c *gin.Context) {
 	items := make([]pullResModelItem, 0, len(res))
 	for _, v := range res {
 		var isSelf uint8 = 0
-		userId := v.SenderID
+		uid := v.SenderID
 		if v.SenderID == userId {
 			isSelf = 1
-			userId = v.ReceiverID
+			uid = v.ReceiverID
 		}
 
 		items = append(items, pullResModelItem{
 			SenderID:       v.SenderID,
 			ReceiverID:     v.ReceiverID,
-			UserID:         userId,
+			UserID:         uid,
 			ConversationID: v.ConversationID,
 			Type:           v.Type,
 			Text:           v.Text,

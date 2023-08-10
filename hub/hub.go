@@ -3,11 +3,14 @@ package hub
 import (
 	"context"
 	"sync"
+	"unsafe"
 
 	"github.com/gorilla/websocket"
 
+	"lim/config"
 	"lim/pkg/cache"
 	"lim/pkg/packet"
+	"lim/tools/token"
 )
 
 var (
@@ -26,8 +29,8 @@ type Hub struct {
 	rootCtx context.Context
 }
 
-func (h *Hub) SetConn(userId string, conn *websocket.Conn) {
-	c := NewConn(userId, conn)
+func (h *Hub) SetConn(conn *websocket.Conn) {
+	c := NewConn(conn)
 	_, data, err := c.conn.ReadMessage() // Fist Pkt: auth packet
 	if err != nil {
 		return
@@ -40,7 +43,21 @@ func (h *Hub) SetConn(userId string, conn *websocket.Conn) {
 		return
 	}
 	bodyData := body.(*packet.AuthPktData)
+	tokenKey := unsafe.Slice(unsafe.StringData(config.GetApp().TokenKey), len(config.GetApp().TokenKey))
+	userId, err := token.Parse(tokenKey, bodyData.Token)
+	if err != nil {
+		retPkt := packet.New()
+		retPkt.Set(packet.PassPacketType, &packet.PassPktData{
+			Code: 1,
+			Desc: "凭证认证失败",
+		})
+		c.conn.WriteMessage(websocket.TextMessage, retPkt.Encode())
+		c.Close()
+		return
+	}
+
 	isPass, err := authTokenCa.Verify(bodyData.UserID, bodyData.Token)
+
 	if err != nil {
 		// TODO: log redis error
 		retPkt := packet.New()
@@ -48,7 +65,7 @@ func (h *Hub) SetConn(userId string, conn *websocket.Conn) {
 			Code: 2,
 			Desc: "缓存读取失败",
 		})
-		c.write(retPkt)
+		c.conn.WriteMessage(websocket.TextMessage, retPkt.Encode())
 		c.Close()
 		return
 	}
@@ -58,7 +75,7 @@ func (h *Hub) SetConn(userId string, conn *websocket.Conn) {
 			Code: 1,
 			Desc: "凭证认证失败",
 		})
-		c.write(retPkt)
+		c.conn.WriteMessage(websocket.TextMessage, retPkt.Encode())
 		c.Close()
 		return
 	}
@@ -68,8 +85,9 @@ func (h *Hub) SetConn(userId string, conn *websocket.Conn) {
 		Code: 0,
 		Desc: "登录成功",
 	})
-	c.write(retPkt)
+	c.conn.WriteMessage(websocket.TextMessage, retPkt.Encode())
 
+	c.userId = userId
 	ctx, cancel := context.WithCancel(h.rootCtx)
 	c.cancelFunc = cancel
 
@@ -100,8 +118,8 @@ func (h *Hub) DelConn(userId string) {
 	delete(h.pool, userId)
 }
 
-func SetConn2Hub(userId string, conn *websocket.Conn) {
-	h.SetConn(userId, conn)
+func SetConn2Hub(conn *websocket.Conn) {
+	h.SetConn(conn)
 }
 
 func DelConn4Hub(userId string) {
@@ -109,5 +127,12 @@ func DelConn4Hub(userId string) {
 }
 
 func Write2Conn(userId string, pkt *packet.Packet) error {
-	return h.pool[userId].Write(pkt.Encode())
+	conn, ok := h.pool[userId]
+	println(userId)
+	println(ok)
+	if !ok {
+		return nil
+	}
+
+	return conn.Write(pkt.Encode())
 }

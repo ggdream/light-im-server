@@ -7,6 +7,7 @@ import (
 
 func Cors() gin.HandlerFunc {
 	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
 
 	return cors.New(config)
 }

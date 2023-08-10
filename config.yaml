@@ -1,0 +1,11 @@
+app:
+  addr: ":8080"
+  token_key: uN8tUgn8hzN6ftVrKyK6OxJj2kaQ5JcX
+
+mongo:
+  uri: mongodb://127.0.0.1:27017
+  database: lim
+
+redis:
+  addr: 127.0.0.1:6379
+  pass: ''
