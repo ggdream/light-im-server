@@ -12,6 +12,7 @@ var (
 
 type Config struct {
 	App   *AppConfig   `yaml:"app"`
+	OSS   *OSSConfig   `yaml:"oss"`
 	Mongo *MongoConfig `yaml:"mongo"`
 	Redis *RedisConfig `yaml:"redis"`
 }
@@ -26,7 +27,6 @@ func Init() error {
 	return yaml.NewDecoder(file).Decode(&c)
 }
 
-
 func SetFromManual(cfg *Config) { c = cfg }
 
 func GetApp() *AppConfig { return c.App }
@@ -34,3 +34,5 @@ func GetApp() *AppConfig { return c.App }
 func GetMongo() *MongoConfig { return c.Mongo }
 
 func GetRedis() *RedisConfig { return c.Redis }
+
+func GetOSS() *OSSConfig { return c.OSS }

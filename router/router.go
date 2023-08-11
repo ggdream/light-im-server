@@ -5,6 +5,7 @@ import (
 
 	"lim/api/auth"
 	"lim/api/conversation"
+	"lim/api/file"
 	"lim/api/message"
 	"lim/api/socket"
 	"lim/api/user"
@@ -31,6 +32,9 @@ func Set(rg *gin.RouterGroup) {
 		convGroup.POST("/pull", conversation.PullContorller)     // c
 		convGroup.POST("/delete", conversation.DeleteController) // c
 		convGroup.POST("/detail", conversation.DetailController) // c
+
+		fileGroup := clientGroup.Group("/file")
+		fileGroup.POST("/presign", file.PresignPutURLController) // c
 	}
 
 	serverGroup := rg.Group("/s")

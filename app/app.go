@@ -14,6 +14,7 @@ import (
 	"lim/middleware"
 	"lim/pkg/cache"
 	"lim/pkg/db"
+	"lim/pkg/oss"
 	"lim/router"
 	"lim/tools/log"
 )
@@ -34,6 +35,10 @@ func New() (*App, error) {
 		return nil, err
 	}
 	err = cache.Init()
+	if err != nil {
+		return nil, err
+	}
+	err = oss.Init()
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +77,9 @@ func (a *App) Run() (err error) {
 	}
 	if err = cache.Close(); err != nil {
 		log.Errorf("Redis关闭失败: %s", err.Error())
+	}
+	if err = oss.Client().Close(); err != nil {
+		log.Errorf("OSS关闭失败: %s", err.Error())
 	}
 
 	return

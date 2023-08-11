@@ -9,3 +9,13 @@ mongo:
 redis:
   addr: 127.0.0.1:6379
   pass: ''
+
+oss:
+  type: minio
+  minio:
+    endpoint: 127.0.0.1:9000
+    tls: False
+    bucket: lim
+    access_key_id: xx
+    secret_access_key: xx
+    token: xx
