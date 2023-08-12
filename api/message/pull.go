@@ -21,22 +21,23 @@ type pullResModel struct {
 }
 
 type pullResModelItem struct {
-	SenderID       string `json:"sender_id"`
-	ReceiverID     string `json:"receiver_id"`
-	UserID         string `json:"user_id"`
-	ConversationID string `json:"conversation_id"`
-	Type           uint8  `json:"type"`
-	Text           string `json:"text"`
-	Image          string `json:"image"`
-	Audio          string `json:"audio"`
-	Video          string `json:"video"`
-	Custom         string `json:"custom"`
-	IsSelf         uint8  `json:"is_self"`
-	IsRead         uint8  `json:"is_read"`
-	IsPeerRead     uint8  `json:"is_peer_read"`
-	Timestamp      int64  `json:"timestamp"`
-	Sequence       int64  `json:"sequence"`
-	CreateAt       int64  `json:"create_at" copier:"Cts"`
+	SenderID       string         `json:"sender_id"`
+	ReceiverID     string         `json:"receiver_id"`
+	UserID         string         `json:"user_id"`
+	ConversationID string         `json:"conversation_id"`
+	Type           uint8          `json:"type"`
+	Text           *db.TextElem   `json:"text"`
+	Image          *db.ImageElem  `json:"image"`
+	Audio          *db.AudioElem  `json:"audio"`
+	Video          *db.VideoElem  `json:"video"`
+	Record         *db.RecordElem `json:"record"`
+	Custom         *db.CustomElem `json:"custom"`
+	IsSelf         uint8          `json:"is_self"`
+	IsRead         uint8          `json:"is_read"`
+	IsPeerRead     uint8          `json:"is_peer_read"`
+	Timestamp      int64          `json:"timestamp"`
+	Sequence       int64          `json:"sequence"`
+	CreateAt       int64          `json:"create_at" copier:"Cts"`
 }
 
 func PullController(c *gin.Context) {

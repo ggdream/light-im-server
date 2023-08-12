@@ -15,7 +15,9 @@ type ChatConv struct {
 	Image          string `json:"image" redis:"image"`
 	Audio          string `json:"audio" redis:"audio"`
 	Video          string `json:"video" redis:"video"`
+	File           string `json:"file" redis:"file"`
 	Custom         string `json:"custom" redis:"custom"`
+	Record         string `json:"record" redis:"record"`
 	Timestamp      int64  `json:"timestamp" redis:"timestamp"`
 	Sequence       int64  `json:"sequence" redis:"sequence"`
 	CreateAt       int64  `json:"create_at" redis:"create_at"`

@@ -43,7 +43,7 @@ func PresignPutURLController(c *gin.Context) {
 	}
 
 	userId := config.CtxKeyManager.GetUserID(c)
-	name := fmt.Sprintf("/%s/%s%s", userId, u.String(), fext.MustMimeToExt(*form.ContentType))
+	name := fmt.Sprintf("%s/%s%s", userId, u.String(), fext.MustMimeToExt(*form.ContentType))
 	presignUrl, url, err := oss.Client().PresignPutURL(name, time.Minute*5)
 	if err != nil {
 		errno.NewF(errno.BaseErrOSS, err.Error(), errno.ErrOSSPresignPutURLGenFailed).Reply(c)

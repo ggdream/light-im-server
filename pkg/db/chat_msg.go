@@ -10,21 +10,68 @@ import (
 )
 
 type ChatMsgDoc struct {
-	SenderID       string `json:"sender_id" bson:"sender_id"`
-	ReceiverID     string `json:"receiver_id" bson:"receiver_id"`
-	ConversationID string `json:"conversation_id" bson:"conversation_id"`
-	Type           uint8  `json:"type" bson:"type"`
-	Text           string `json:"text" bson:"text"`
-	Image          string `json:"image" bson:"image"`
-	Audio          string `json:"audio" bson:"audio"`
-	Video          string `json:"video" bson:"video"`
-	Custom         string `json:"custom" bson:"custom"`
-	IsRead         uint8  `json:"is_read" bson:"is_read"`
-	Timestamp      int64  `json:"timestamp" bson:"timestamp"`
-	Sequence       int64  `json:"sequence" bson:"sequence"`
-	CreateTs       int64  `json:"create_ts" bson:"create_ts" copier:"Cts"`
-	CreateAt       string `json:"create_at" bson:"create_at"`
-	DeleteAt       string `json:"delete_at" bson:"delete_at"`
+	SenderID       string      `json:"sender_id" bson:"sender_id"`
+	ReceiverID     string      `json:"receiver_id" bson:"receiver_id"`
+	ConversationID string      `json:"conversation_id" bson:"conversation_id"`
+	Type           uint8       `json:"type" bson:"type"`
+	Text           *TextElem   `json:"text" bson:"text"`
+	Image          *ImageElem  `json:"image" bson:"image"`
+	Audio          *AudioElem  `json:"audio" bson:"audio"`
+	Video          *VideoElem  `json:"video" bson:"video"`
+	File           *FileElem   `json:"file" bson:"file"`
+	Custom         *CustomElem `json:"custom" bson:"custom"`
+	Record         *RecordElem `json:"record" bson:"record"`
+	IsRead         uint8       `json:"is_read" bson:"is_read"`
+	Timestamp      int64       `json:"timestamp" bson:"timestamp"`
+	Sequence       int64       `json:"sequence" bson:"sequence"`
+	CreateTs       int64       `json:"create_ts" bson:"create_ts" copier:"Cts"`
+	CreateAt       string      `json:"create_at" bson:"create_at"`
+	DeleteAt       string      `json:"delete_at" bson:"delete_at"`
+}
+
+type TextElem struct {
+	Text string `json:"text" bson:"text"`
+}
+type ImageElem struct {
+	Name         string `json:"name" bson:"name"`
+	Size         int64  `json:"size" bson:"size"`
+	ContentType  string `json:"content_type" bson:"content_type"`
+	URL          string `json:"url" bson:"url"`
+	ThumbnailURL string `json:"thumbnail_url" bson:"thumbnail_url"`
+}
+
+type AudioElem struct {
+	Name        string `json:"name" bson:"name"`
+	Size        int64  `json:"size" bson:"size"`
+	ContentType string `json:"content_type" bson:"content_type"`
+	Duration    int64  `json:"duration" bson:"duration"`
+	URL         string `json:"url" bson:"url"`
+}
+
+type VideoElem struct {
+	Name         string `json:"name" bson:"name"`
+	Size         int64  `json:"size" bson:"size"`
+	ContentType  string `json:"content_type" bson:"content_type"`
+	Duration     int64  `json:"duration" bson:"duration"`
+	URL          string `json:"url" bson:"url"`
+	ThumbnailURL string `json:"thumbnail_url" bson:"thumbnail_url"`
+}
+type FileElem struct {
+	Name        string `json:"name" bson:"name"`
+	Size        int64  `json:"size" bson:"size"`
+	ContentType string `json:"content_type" bson:"content_type"`
+	URL         string `json:"url" bson:"url"`
+}
+
+type CustomElem struct {
+	Content string `json:"content" bson:"content"`
+}
+
+type RecordElem struct {
+	Size        int64  `json:"size" bson:"size"`
+	ContentType string `json:"content_type" bson:"content_type"`
+	Duration    int64  `json:"duration" bson:"duration"`
+	URL         string `json:"url" bson:"url"`
 }
 
 func (m *ChatMsgDoc) Create() error {
@@ -95,7 +142,7 @@ func (m *ChatMsgDoc) List(senderId, receiverId string, sequence, number int64) (
 func (m *ChatMsgDoc) CountUnrad(userId string) (int64, error) {
 	return client.Count(m.DocName(), bson.M{
 		"receiver_id": userId,
-		"is_read": 0,
+		"is_read":     0,
 	})
 }
 

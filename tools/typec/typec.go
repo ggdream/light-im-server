@@ -49,10 +49,25 @@ func MapToUrlValuesToJson(data map[string]any) string {
 	return values.Encode()
 }
 
-func MapToJson(data map[string]any) string {
+func MapToJson(data any) string {
+	if data == nil {
+		return ""
+	}
+
 	res, _ := json.Marshal(data)
 
 	return unsafe.String(&res[0], len(res))
+}
+
+func JsonToStruct[T any](data string) *T {
+	if data == "" {
+		return nil
+	}
+
+	var res T
+	_ = json.Unmarshal(unsafe.Slice(unsafe.StringData(data), len(data)), &res)
+
+	return &res
 }
 
 func JsonToMap(data string) map[string]any {

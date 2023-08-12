@@ -10,6 +10,7 @@ import (
 	"lim/pkg/db"
 	"lim/pkg/errno"
 	"lim/pkg/packet"
+	"lim/tools/typec"
 )
 
 var (
@@ -25,34 +26,38 @@ func init() {
 }
 
 type sendReqModel struct {
-	SenderID   string  `json:"sender_id"`
-	ReceiverID *string `json:"receiver_id" binding:"required"`
-	Type       *uint8  `json:"type" binding:"required"`
-	Text       string  `json:"text"`
-	Image      string  `json:"image"`
-	Audio      string  `json:"audio"`
-	Video      string  `json:"video"`
-	Custom     string  `json:"custom"`
-	Timestamp  *int64  `json:"timestamp" binding:"required"`
+	SenderID   string         `json:"sender_id"`
+	ReceiverID *string        `json:"receiver_id" binding:"required"`
+	Type       *uint8         `json:"type" binding:"required"`
+	Text       *db.TextElem   `json:"text"`
+	Image      *db.ImageElem  `json:"image"`
+	Audio      *db.AudioElem  `json:"audio"`
+	Video      *db.VideoElem  `json:"video"`
+	File       *db.FileElem   `json:"file"`
+	Custom     *db.CustomElem `json:"custom"`
+	Record     *db.RecordElem `json:"record"`
+	Timestamp  *int64         `json:"timestamp" binding:"required"`
 }
 
 type sendResModel struct {
-	SenderID       string `json:"sender_id"`
-	ReceiverID     string `json:"receiver_id"`
-	UserID         string `json:"user_id"`
-	ConversationID string `json:"conversation_id"`
-	Type           uint8  `json:"type"`
-	Text           string `json:"text"`
-	Image          string `json:"image"`
-	Audio          string `json:"audio"`
-	Video          string `json:"video"`
-	Custom         string `json:"custom"`
-	IsSelf         uint8  `json:"is_self"`
-	IsRead         uint8  `json:"is_read"`
-	IsPeerRead     uint8  `json:"is_peer_read"`
-	Timestamp      int64  `json:"timestamp"`
-	Sequence       int64  `json:"sequence"`
-	CreateAt       int64  `json:"create_at"`
+	SenderID       string         `json:"sender_id"`
+	ReceiverID     string         `json:"receiver_id"`
+	UserID         string         `json:"user_id"`
+	ConversationID string         `json:"conversation_id"`
+	Type           uint8          `json:"type"`
+	Text           *db.TextElem   `json:"text"`
+	Image          *db.ImageElem  `json:"image"`
+	Audio          *db.AudioElem  `json:"audio"`
+	Video          *db.VideoElem  `json:"video"`
+	File           *db.FileElem   `json:"file"`
+	Custom         *db.CustomElem `json:"custom"`
+	Record         *db.RecordElem `json:"record"`
+	IsSelf         uint8          `json:"is_self"`
+	IsRead         uint8          `json:"is_read"`
+	IsPeerRead     uint8          `json:"is_peer_read"`
+	Timestamp      int64          `json:"timestamp"`
+	Sequence       int64          `json:"sequence"`
+	CreateAt       int64          `json:"create_at"`
 }
 
 func SendController(isAdmin bool) gin.HandlerFunc {
@@ -98,16 +103,71 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			ReceiverID:     *form.ReceiverID,
 			ConversationID: doc.ConversationID,
 			Type:           *form.Type,
-			Text:           form.Text,
-			Image:          form.Image,
-			Audio:          form.Audio,
-			Video:          form.Video,
-			Custom:         form.Custom,
+			Text:           typec.MapToJson(form.Text),
+			Image:          typec.MapToJson(form.Image),
+			Audio:          typec.MapToJson(form.Audio),
+			Video:          typec.MapToJson(form.Video),
+			File:           typec.MapToJson(form.File),
+			Custom:         typec.MapToJson(form.Custom),
+			Record:         typec.MapToJson(form.Record),
 			Timestamp:      *form.Timestamp,
 			Sequence:       seq,
 			CreateAt:       doc.CreateTs,
 		}
 		_ = ca.Add(senderId, *form.ReceiverID)
+
+		text, image, audio, video, file, custom, record := (*packet.MessageTextElem)(nil), (*packet.MessageImageElem)(nil), (*packet.MessageAudioElem)(nil), (*packet.MessageVideoElem)(nil), (*packet.MessageFileElem)(nil), (*packet.MessageCustomElem)(nil), (*packet.MessageRecordElem)(nil)
+		switch *form.Type {
+		case packet.TextMessageType:
+			text = &packet.MessageTextElem{
+				Text: form.Text.Text,
+			}
+		case packet.ImageMessageType:
+			image = &packet.MessageImageElem{
+				Name:         form.Image.Name,
+				Size:         form.Image.Size,
+				ContentType:  form.Image.ContentType,
+				URL:          form.Image.URL,
+				ThumbnailURL: form.Image.ThumbnailURL,
+			}
+		case packet.AudioMessageType:
+			audio = &packet.MessageAudioElem{
+				Name:        form.Audio.Name,
+				Size:        form.Audio.Size,
+				ContentType: form.Audio.ContentType,
+				Duration:    form.Audio.Duration,
+				URL:         form.Audio.URL,
+			}
+		case packet.VideoMessageType:
+			video = &packet.MessageVideoElem{
+				Name:         form.Video.Name,
+				Size:         form.Video.Size,
+				ContentType:  form.Video.ContentType,
+				Duration:     form.Video.Duration,
+				URL:          form.Video.URL,
+				ThumbnailURL: form.Video.ThumbnailURL,
+			}
+		case packet.FileMessageType:
+			file = &packet.MessageFileElem{
+				Name:        form.File.Name,
+				Size:        form.File.Size,
+				ContentType: form.File.ContentType,
+				URL:         form.File.URL,
+			}
+		case packet.CustomMessageType:
+			custom = &packet.MessageCustomElem{
+				Content: form.Custom.Content,
+			}
+		case packet.RecordMessageType:
+			record = &packet.MessageRecordElem{
+				Size:        form.Record.Size,
+				ContentType: form.Record.ContentType,
+				Duration:    form.Record.Duration,
+				URL:         form.Record.URL,
+			}
+		default:
+			return
+		}
 
 		pkt1 := packet.New()
 		data1 := &packet.MessagePktData{
@@ -116,11 +176,13 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			UserID:         *form.ReceiverID,
 			ConversationID: doc.ConversationID,
 			Type:           *form.Type,
-			Text:           form.Text,
-			Image:          form.Image,
-			Audio:          form.Audio,
-			Video:          form.Video,
-			Custom:         form.Custom,
+			Text:           text,
+			Image:          image,
+			Audio:          audio,
+			Video:          video,
+			File:           file,
+			Custom:         custom,
+			Record:         record,
 			Timestamp:      *form.Timestamp,
 			IsSelf:         1,
 			IsRead:         1,
@@ -137,11 +199,13 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			UserID:         senderId,
 			ConversationID: doc.ConversationID,
 			Type:           *form.Type,
-			Text:           form.Text,
-			Image:          form.Image,
-			Audio:          form.Audio,
-			Video:          form.Video,
-			Custom:         form.Custom,
+			Text:           text,
+			Image:          image,
+			Audio:          audio,
+			Video:          video,
+			File:           file,
+			Custom:         custom,
+			Record:         record,
 			Timestamp:      *form.Timestamp,
 			IsSelf:         0,
 			IsRead:         0,
@@ -161,7 +225,9 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			Image:          form.Image,
 			Audio:          form.Audio,
 			Video:          form.Video,
+			File:           form.File,
 			Custom:         form.Custom,
+			Record:         form.Record,
 			Timestamp:      *form.Timestamp,
 			IsSelf:         1,
 			IsRead:         1,

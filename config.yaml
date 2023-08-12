@@ -16,6 +16,6 @@ oss:
     endpoint: 127.0.0.1:9000
     tls: False
     bucket: lim
-    access_key_id: xx
-    secret_access_key: xx
-    token: xx
+    access_key_id: 'root'
+    secret_access_key: '12345678'
+    token: ''

@@ -5,7 +5,9 @@ import (
 
 	"lim/config"
 	"lim/pkg/cache"
+	"lim/pkg/db"
 	"lim/pkg/errno"
+	"lim/tools/typec"
 )
 
 type pullResModel struct {
@@ -14,22 +16,24 @@ type pullResModel struct {
 }
 
 type pullResModelItem struct {
-	SenderID       string `json:"sender_id"`
-	ReceiverID     string `json:"receiver_id"`
-	UserID         string `json:"user_id"`
-	ConversationID string `json:"conversation_id"`
-	Type           uint8  `json:"type"`
-	Text           string `json:"text"`
-	Image          string `json:"image"`
-	Audio          string `json:"audio"`
-	Video          string `json:"video"`
-	Custom         string `json:"custom"`
-	IsSelf         uint8  `json:"is_self"`
-	IsRead         uint8  `json:"is_read"`
-	Unread         int64  `json:"unread"`
-	Timestamp      int64  `json:"timestamp"`
-	Sequence       int64  `json:"sequence"`
-	CreateAt       int64  `json:"create_at"`
+	SenderID       string         `json:"sender_id"`
+	ReceiverID     string         `json:"receiver_id"`
+	UserID         string         `json:"user_id"`
+	ConversationID string         `json:"conversation_id"`
+	Type           uint8          `json:"type"`
+	Text           *db.TextElem   `json:"text"`
+	Image          *db.ImageElem  `json:"image"`
+	Audio          *db.AudioElem  `json:"audio"`
+	Video          *db.VideoElem  `json:"video"`
+	File           *db.FileElem   `json:"file"`
+	Custom         *db.CustomElem `json:"custom"`
+	Record         *db.RecordElem `json:"record"`
+	IsSelf         uint8          `json:"is_self"`
+	IsRead         uint8          `json:"is_read"`
+	Unread         int64          `json:"unread"`
+	Timestamp      int64          `json:"timestamp"`
+	Sequence       int64          `json:"sequence"`
+	CreateAt       int64          `json:"create_at"`
 }
 
 func PullContorller(c *gin.Context) {
@@ -60,11 +64,13 @@ func PullContorller(c *gin.Context) {
 			UserID:         uid,
 			ConversationID: v.ConversationID,
 			Type:           v.Type,
-			Text:           v.Text,
-			Image:          v.Image,
-			Audio:          v.Audio,
-			Video:          v.Video,
-			Custom:         v.Custom,
+			Text:           typec.JsonToStruct[db.TextElem](v.Text),
+			Image:          typec.JsonToStruct[db.ImageElem](v.Image),
+			Audio:          typec.JsonToStruct[db.AudioElem](v.Audio),
+			Video:          typec.JsonToStruct[db.VideoElem](v.Video),
+			File:           typec.JsonToStruct[db.FileElem](v.File),
+			Custom:         typec.JsonToStruct[db.CustomElem](v.Custom),
+			Record:         typec.JsonToStruct[db.RecordElem](v.Record),
 			IsSelf:         isSelf,
 			IsRead: func() uint8 {
 				if v.Unread == 0 {

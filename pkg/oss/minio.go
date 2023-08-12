@@ -40,7 +40,7 @@ func NewMinIO(endpoint, bucket, accessKeyId, secretAccessKey, token string, tls 
 		rootCtx:         context.TODO(),
 		baseTime:        time.Second * 3,
 	}
-	err = c.initBucket(bucket, fmt.Sprintf(readonlyBucketPolicy, bucket))
+	err = c.initBucket(bucket, fmt.Sprintf(readonlyBucketPolicy, bucket, bucket))
 	if err != nil {
 		return nil, err
 	}
