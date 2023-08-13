@@ -88,7 +88,9 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			Image:      form.Image,
 			Audio:      form.Audio,
 			Video:      form.Video,
+			File:       form.File,
 			Custom:     form.Custom,
+			Record:     form.Record,
 			Timestamp:  *form.Timestamp,
 			Sequence:   seq,
 		}

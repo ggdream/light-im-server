@@ -2,10 +2,10 @@ package fext
 
 func MustMimeToExt(mime string) string { return mimeTypeToExtensionMap[mime] }
 
-func MimeToExt(mime string) (string, bool) { 
+func MimeToExt(mime string) (string, bool) {
 	ext, ok := mimeTypeToExtensionMap[mime]
 	return ext, ok
- }
+}
 
 var mimeTypeToExtensionMap = map[string]string{
 	"image/x-xpixmap":             ".xpm",
@@ -41,6 +41,7 @@ var mimeTypeToExtensionMap = map[string]string{
 	"application/pkcs7-signature":                              ".p7s",
 	"application/ogg":                                          ".ogg",
 	"audio/ogg":                                                ".oga",
+	"audio/x-wav":                                              ".wav",
 	"video/ogg":                                                ".ogv",
 	"image/png":                                                ".png",
 	"image/vnd.mozilla.apng":                                   ".png",
