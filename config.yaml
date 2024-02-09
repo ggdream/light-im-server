@@ -16,6 +16,6 @@ oss:
     endpoint: 127.0.0.1:9000
     tls: False
     bucket: lim
-    access_key_id: 'root'
+    access_key_id: 'minio'
     secret_access_key: '12345678'
     token: ''

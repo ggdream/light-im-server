@@ -9,8 +9,8 @@ import (
 
 type createReqModel struct {
 	UserID   *string `json:"user_id" binding:"required"`
-	Avatar   string  `json:"avatar"`
 	Nickname string  `json:"nickname"`
+	Avatar   string  `json:"avatar"`
 }
 
 func CreateController(c *gin.Context) {

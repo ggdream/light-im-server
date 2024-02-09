@@ -10,8 +10,8 @@ import (
 )
 
 type pullReqModel struct {
-	UserID   *string `json:"user_id" binding:"required"`
-	Sequence int64   `json:"sequence"`
+	ConversationID *string `json:"conversation_id" binding:"required"`
+	Sequence       int64   `json:"sequence"`
 }
 
 type pullResModel struct {
@@ -24,6 +24,7 @@ type pullResModelItem struct {
 	SenderID       string         `json:"sender_id"`
 	ReceiverID     string         `json:"receiver_id"`
 	UserID         string         `json:"user_id"`
+	GroupID        string         `json:"group_id"`
 	ConversationID string         `json:"conversation_id"`
 	Type           uint8          `json:"type"`
 	Text           *db.TextElem   `json:"text"`
@@ -52,7 +53,7 @@ func PullController(c *gin.Context) {
 
 	userId := config.CtxKeyManager.GetUserID(c)
 	doc := db.ChatMsgDoc{}
-	res, err := doc.List(*form.UserID, userId, form.Sequence, 20)
+	res, err := doc.List(c, *form.ConversationID, userId, form.Sequence, 20)
 	if err != nil {
 		errno.NewF(errno.BaseErrMongo, err.Error(), errno.ErrAuthLoginFailed).Reply(c)
 		return

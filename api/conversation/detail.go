@@ -43,7 +43,7 @@ func DetailController(c *gin.Context) {
 	ret := &detailResModel{
 		UserID:         *form.UserID,
 		ConversationID: genCID(userId, *form.UserID),
-		Nickname:       doc.Nickname,
+		Nickname:       doc.Username,
 		Avatar:         doc.Avatar,
 	}
 	errno.NewS(ret).Reply(c)

@@ -65,6 +65,14 @@ func Close() error {
 	return client.client.Disconnect(ctx)
 }
 
+func (m *Mongo) Client() *mongo.Client {
+	return m.client
+}
+
+func (m *Mongo) Database() *mongo.Database {
+	return m.Client().Database(m.database)
+}
+
 func (m *Mongo) SearchOne(collection string, filter interface{}, opt *options.FindOneOptions) *mongo.SingleResult {
 	ctx, cancel := context.WithTimeout(m.context, m.timeout*2)
 	defer cancel()
@@ -94,7 +102,7 @@ func (m *Mongo) Insert(collection string, document interface{}) error {
 	return err
 }
 
-func (m *Mongo) Update(collection string, f, u bson.D) error {
+func (m *Mongo) Update(collection string, f, u any) error {
 	ctx, cancel := context.WithTimeout(m.context, m.timeout)
 	defer cancel()
 
@@ -102,7 +110,7 @@ func (m *Mongo) Update(collection string, f, u bson.D) error {
 	return err
 }
 
-func (m *Mongo) UpdateMany(collection string, f, u bson.D) error {
+func (m *Mongo) UpdateMany(collection string, f, u any) error {
 	ctx, cancel := context.WithTimeout(m.context, m.timeout)
 	defer cancel()
 

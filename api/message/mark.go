@@ -10,8 +10,8 @@ import (
 )
 
 type markReqModel struct {
-	UserID   *string `json:"user_id" binding:"required"`
-	Sequence *int64  `json:"sequence" binding:"required"`
+	ConversationID *string `json:"conversation_id" binding:"required"`
+	Sequence       *int64  `json:"sequence" binding:"required"`
 }
 
 func MarkController(c *gin.Context) {
@@ -26,14 +26,14 @@ func MarkController(c *gin.Context) {
 
 	userId := config.CtxKeyManager.GetUserID(c)
 	doc := db.ChatMsgDoc{}
-	err = doc.MarkAsRead(*form.UserID, userId, *form.Sequence)
+	err = doc.MarkAsRead(c, *form.ConversationID, userId, *form.Sequence)
 	if err != nil {
 		errno.NewF(errno.BaseErrMongo, err.Error(), errno.ErrChatMsgMarkFailed).Reply(c)
 		return
 	}
 
 	ca := cache.ChatConv{}
-	_ = ca.MarkAsRead(userId, *form.UserID)
+	_ = ca.MarkAsRead(c.Request.Context(), userId, *form.ConversationID)
 
 	// TODO: hub通知已读
 

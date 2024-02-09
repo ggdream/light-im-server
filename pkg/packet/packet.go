@@ -11,17 +11,12 @@ func New() *Packet {
 	return &Packet{}
 }
 
-func (p *Packet) Set(packetType PacketType, data any) error {
-	value, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
+func (p *Packet) Set(packetType PacketType, data any) {
+	value, _ := json.Marshal(data)
 	tmp := json.RawMessage(value)
 
 	p.Type = packetType
 	p.Data = &tmp
-
-	return nil
 }
 
 func (p *Packet) Encode() []byte {

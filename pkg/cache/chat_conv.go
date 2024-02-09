@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/redis/go-redis/v9"
@@ -9,6 +10,7 @@ import (
 type ChatConv struct {
 	SenderID       string `json:"sender_id" redis:"sender_id"`
 	ReceiverID     string `json:"receiver_id" redis:"receiver_id"`
+	GroupID        string `json:"group_id" redis:"group_id"`
 	ConversationID string `json:"conversation_id" redis:"conversation_id"`
 	Type           uint8  `json:"type" redis:"type"`
 	Text           string `json:"text" redis:"text"`
@@ -21,57 +23,56 @@ type ChatConv struct {
 	Timestamp      int64  `json:"timestamp" redis:"timestamp"`
 	Sequence       int64  `json:"sequence" redis:"sequence"`
 	CreateAt       int64  `json:"create_at" redis:"create_at"`
-	Unread         int64  `json:"unread" redis:"unread"`
+	Unread         int64  `json:"unread" redis:"unread,omitempty"`
 }
 
-func (c *ChatConv) Add(senderId, receiverId string) error {
-	ctx, cancel := withTimeout()
-	defer cancel()
-
+func (c *ChatConv) Add(ctx context.Context, senderId string, receiverIds []string, conversationId string) error {
 	_, err := client.Pipelined(ctx, func(p redis.Pipeliner) error {
-		z1 := redis.Z{
+		z := redis.Z{
 			Score:  float64(c.CreateAt),
-			Member: receiverId,
+			Member: conversationId,
 		}
-		err := p.ZAdd(ctx, c.joinName(senderId), z1).Err()
+		err := p.ZAdd(ctx, c.joinName(senderId), z).Err()
 		if err != nil {
 			return err
 		}
-		z2 := redis.Z{
-			Score:  float64(c.CreateAt),
-			Member: senderId,
-		}
-		err = p.ZAdd(ctx, c.joinName(receiverId), z2).Err()
-		if err != nil {
-			return err
+		if receiverIds != nil {
+			for _, receiverId := range receiverIds {
+				err = p.ZAdd(ctx, c.joinName(receiverId), z).Err()
+				if err != nil {
+					return err
+				}
+			}
 		}
 
-		err = p.HSet(ctx, c.joinName1(senderId, receiverId), c).Err()
+		err = p.HSet(ctx, c.joinName1(senderId, conversationId), c).Err()
 		if err != nil {
 			return err
 		}
-
-		err = p.HSet(ctx, c.joinName1(receiverId, senderId), c).Err()
-		if err != nil {
-			return err
+		if receiverIds != nil {
+			for _, receiverId := range receiverIds {
+				err = p.HSet(ctx, c.joinName1(receiverId, conversationId), c).Err()
+				if err != nil {
+					return err
+				}
+				err = p.HIncrBy(ctx, c.joinName1(receiverId, conversationId), "unread", 1).Err()
+				if err != nil {
+					return err
+				}
+			}
 		}
 
-		return p.HIncrBy(ctx, c.joinName1(receiverId, senderId), "unread", 1).Err()
+		return nil
 	})
+
 	return err
 }
 
-func (c *ChatConv) MarkAsRead(userId, conversationId string) error {
-	ctx, cancel := withTimeout()
-	defer cancel()
-
-	return client.HDel(ctx, c.joinName1(userId, conversationId), "unread").Err()
+func (c *ChatConv) MarkAsRead(ctx context.Context, userId, conversationId string) error {
+	return client.HSet(ctx, c.joinName1(userId, conversationId), "unread", 0).Err()
 }
 
-func (c *ChatConv) Del(userId, conversationId string) error {
-	ctx, cancel := withTimeout()
-	defer cancel()
-
+func (c *ChatConv) Del(ctx context.Context, userId, conversationId string) error {
 	_, err := client.Pipelined(ctx, func(p redis.Pipeliner) error {
 		err := p.Unlink(ctx, c.joinName1(userId, conversationId)).Err()
 		if err != nil {
@@ -80,13 +81,11 @@ func (c *ChatConv) Del(userId, conversationId string) error {
 
 		return p.ZRem(ctx, c.joinName(userId), conversationId).Err()
 	})
+
 	return err
 }
 
-func (c *ChatConv) List(userId string) ([]ChatConv, error) {
-	ctx, cancel := withTimeout()
-	defer cancel()
-
+func (c *ChatConv) List(ctx context.Context, userId string) ([]ChatConv, error) {
 	res, err := client.ZRevRange(ctx, c.joinName(userId), 0, -1).Result()
 	if err != nil {
 		return nil, err

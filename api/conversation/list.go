@@ -43,7 +43,7 @@ func PullContorller(c *gin.Context) {
 	)
 
 	userId := config.CtxKeyManager.GetUserID(c)
-	res, err := ca.List(userId)
+	res, err := ca.List(c.Request.Context(), userId)
 	if err != nil {
 		errno.NewF(errno.BaseErrRedis, err.Error(), errno.ErrChatConvListFailed).Reply(c)
 		return

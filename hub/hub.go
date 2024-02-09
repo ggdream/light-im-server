@@ -128,8 +128,6 @@ func DelConn4Hub(userId string) {
 
 func Write2Conn(userId string, pkt *packet.Packet) error {
 	conn, ok := h.pool[userId]
-	println(userId)
-	println(ok)
 	if !ok {
 		return nil
 	}

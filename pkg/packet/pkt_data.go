@@ -15,9 +15,10 @@ type PassPktData struct {
 }
 
 type MessagePktData struct {
+	UserID         string             `json:"user_id"`
 	SenderID       string             `json:"sender_id"`
 	ReceiverID     string             `json:"receiver_id"`
-	UserID         string             `json:"user_id"`
+	GroupID        string             `json:"group_id"`
 	ConversationID string             `json:"conversation_id"`
 	Type           uint8              `json:"type"`
 	Text           *MessageTextElem   `json:"text"`

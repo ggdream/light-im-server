@@ -6,19 +6,24 @@ import (
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	"lim/config"
 )
 
 type UserInfoDoc struct {
-	UserID   string `json:"user_id" bson:"user_id"`
-	Nickname string `json:"nickname" bson:"nickname"`
-	Avatar   string `json:"avatar" bson:"avatar"`
-	CreateAt string `json:"create_at" bson:"create_at"`
-	DeleteAt string `json:"delete_at" bson:"delete_at"`
-	// UpdateAt int64  `json:"update_at" bson:"update_at"`
+	BaseAutoIDModel `bson:",inline"`
+	UserID          string `json:"user_id" bson:"user_id"`
+	Username        string `json:"username" bson:"username"`
+	Avatar          string `json:"avatar" bson:"avatar"`
 }
 
-func (m *UserInfoDoc) Create(userId, nickname, avatar string) error {
-	err := client.SearchOne(m.DocName(), bson.D{{Key: "user_id", Value: userId}}, nil).Err()
+func (m *UserInfoDoc) Create(userId, username, avatar string) error {
+	err := client.SearchOne(m.DocName(), bson.M{
+		"user_id": userId,
+		"status": bson.M{
+			"$ne": config.RecordStatusDelete,
+		},
+	}, nil).Err()
 	if err == nil {
 		return errors.New("用户已存在")
 	}
@@ -29,18 +34,24 @@ func (m *UserInfoDoc) Create(userId, nickname, avatar string) error {
 	}
 
 	m.UserID = userId
-	m.Nickname = nickname
+	m.Username = username
 	m.Avatar = avatar
-	m.CreateAt = time.Now().Format(time.RFC3339)
+	m.CreateAt = time.Now().UnixMilli()
+	m.Status = config.RecordStatusNormal
 
 	return client.Insert(m.DocName(), m)
 }
 
 func (m *UserInfoDoc) Search(userId string) error {
-	return client.SearchOne(m.DocName(), bson.D{{Key: "user_id", Value: userId}, {Key: "delete_at", Value: ""}}, nil).Decode(m)
+	return client.SearchOne(m.DocName(), bson.M{
+		"user_id": userId,
+		"status": bson.M{
+			"$ne": config.RecordStatusDelete,
+		},
+	}, nil).Decode(m)
 }
 
-func (m *UserInfoDoc) Update(userId, nickname, avatar string) error {
+func (m *UserInfoDoc) Update(userId, username, avatar string) error {
 	return client.Update(
 		m.DocName(),
 		bson.D{
@@ -48,12 +59,11 @@ func (m *UserInfoDoc) Update(userId, nickname, avatar string) error {
 				Key: "user_id", Value: userId,
 			},
 		},
-		bson.D{
-			{
-				Key: "nickname", Value: nickname,
-			},
-			{
-				Key: "avatar", Value: avatar,
+		bson.M{
+			"$set": bson.M{
+				"username":  username,
+				"avatar":    avatar,
+				"update_at": time.Now().UnixMilli(),
 			},
 		},
 	)
@@ -64,7 +74,7 @@ func (m *UserInfoDoc) Delete(userId string) error {
 		m.DocName(),
 		bson.D{{Key: "user_id", Value: userId}},
 		bson.D{{Key: "$set", Value: bson.D{
-			{Key: "delete_at", Value: time.Now().Format(time.RFC3339)},
+			{Key: "delete_at", Value: time.Now().UnixMilli()},
 		}}},
 	)
 }

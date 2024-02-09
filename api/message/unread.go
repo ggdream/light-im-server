@@ -19,7 +19,7 @@ func UnreadController(c *gin.Context) {
 	)
 
 	userId := config.CtxKeyManager.GetUserID(c)
-	res, err := doc.CountUnrad(userId)
+	res, err := doc.CountUnread(c, userId)
 	if err != nil {
 		errno.NewF(errno.BaseErrMongo, err.Error(), errno.ErrChatMsgUnreadFailed).Reply(c)
 		return

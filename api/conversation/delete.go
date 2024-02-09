@@ -9,7 +9,7 @@ import (
 )
 
 type deleteReqModel struct {
-	UserID *string `json:"user_id" binding:"required"`
+	ConversationID *string `json:"conversation_id" binding:"required"`
 }
 
 func DeleteController(c *gin.Context) {
@@ -24,7 +24,7 @@ func DeleteController(c *gin.Context) {
 
 	userId := config.CtxKeyManager.GetUserID(c)
 	ca := cache.ChatConv{}
-	err = ca.Del(userId, *form.UserID)
+	err = ca.Del(c.Request.Context(), userId, *form.ConversationID)
 	if err != nil {
 		errno.NewF(errno.BaseErrRedis, err.Error(), errno.ErrChatConvDelFailed).Reply(c)
 		return

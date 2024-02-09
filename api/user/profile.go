@@ -36,7 +36,7 @@ func ProfileController(c *gin.Context) {
 
 	ret := &profileResModel{
 		UserID:   *form.UserID,
-		Nickname: doc.Nickname,
+		Nickname: doc.Username,
 		Avatar:   doc.Avatar,
 	}
 	errno.NewS(ret).Reply(c)

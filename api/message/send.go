@@ -27,7 +27,8 @@ func init() {
 
 type sendReqModel struct {
 	SenderID   string         `json:"sender_id"`
-	ReceiverID *string        `json:"receiver_id" binding:"required"`
+	ReceiverID string         `json:"receiver_id"`
+	GroupID    string         `json:"group_id"`
 	Type       *uint8         `json:"type" binding:"required"`
 	Text       *db.TextElem   `json:"text"`
 	Image      *db.ImageElem  `json:"image"`
@@ -40,9 +41,10 @@ type sendReqModel struct {
 }
 
 type sendResModel struct {
+	UserID         string         `json:"user_id"`
 	SenderID       string         `json:"sender_id"`
 	ReceiverID     string         `json:"receiver_id"`
-	UserID         string         `json:"user_id"`
+	GroupID        string         `json:"group_id"`
 	ConversationID string         `json:"conversation_id"`
 	Type           uint8          `json:"type"`
 	Text           *db.TextElem   `json:"text"`
@@ -79,10 +81,12 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			senderId = config.CtxKeyManager.GetUserID(c)
 		}
 
-		seq := node.Generate().Int64()
+		seq := node.Generate()
 		doc := db.ChatMsgDoc{
+			UserID:     senderId,
 			SenderID:   senderId,
-			ReceiverID: *form.ReceiverID,
+			ReceiverID: form.ReceiverID,
+			GroupID:    form.GroupID,
 			Type:       *form.Type,
 			Text:       form.Text,
 			Image:      form.Image,
@@ -92,9 +96,9 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			Custom:     form.Custom,
 			Record:     form.Record,
 			Timestamp:  *form.Timestamp,
-			Sequence:   seq,
+			Sequence:   seq.Int64(),
 		}
-		err = doc.Create()
+		receiverIds, err := doc.Create(c)
 		if err != nil {
 			errno.NewF(errno.BaseErrMongo, err.Error(), errno.ErrChatMsgSaveFailed).Reply(c)
 			return
@@ -102,7 +106,8 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 
 		ca := cache.ChatConv{
 			SenderID:       senderId,
-			ReceiverID:     *form.ReceiverID,
+			ReceiverID:     doc.ReceiverID,
+			GroupID:        doc.GroupID,
 			ConversationID: doc.ConversationID,
 			Type:           *form.Type,
 			Text:           typec.MapToJson(form.Text),
@@ -113,10 +118,10 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			Custom:         typec.MapToJson(form.Custom),
 			Record:         typec.MapToJson(form.Record),
 			Timestamp:      *form.Timestamp,
-			Sequence:       seq,
-			CreateAt:       doc.CreateTs,
+			Sequence:       seq.Int64(),
+			CreateAt:       doc.CreateAt,
 		}
-		_ = ca.Add(senderId, *form.ReceiverID)
+		_ = ca.Add(c, senderId, receiverIds, doc.ConversationID)
 
 		text, image, audio, video, file, custom, record := (*packet.MessageTextElem)(nil), (*packet.MessageImageElem)(nil), (*packet.MessageAudioElem)(nil), (*packet.MessageVideoElem)(nil), (*packet.MessageFileElem)(nil), (*packet.MessageCustomElem)(nil), (*packet.MessageRecordElem)(nil)
 		switch *form.Type {
@@ -173,9 +178,10 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 
 		pkt1 := packet.New()
 		data1 := &packet.MessagePktData{
-			SenderID:       senderId,
-			ReceiverID:     *form.ReceiverID,
-			UserID:         *form.ReceiverID,
+			UserID:         doc.UserID,
+			SenderID:       doc.SenderID,
+			ReceiverID:     doc.ReceiverID,
+			GroupID:        doc.GroupID,
 			ConversationID: doc.ConversationID,
 			Type:           *form.Type,
 			Text:           text,
@@ -185,20 +191,21 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			File:           file,
 			Custom:         custom,
 			Record:         record,
-			Timestamp:      *form.Timestamp,
+			Timestamp:      doc.Timestamp,
 			IsSelf:         1,
 			IsRead:         1,
 			IsPeerRead:     0,
-			Sequence:       seq,
-			CreateAt:       doc.CreateTs,
+			Sequence:       doc.Sequence,
+			CreateAt:       doc.CreateAt,
 		}
 		pkt1.Set(packet.MessagePacketType, data1)
 		err = hub.Write2Conn(senderId, pkt1)
 		pkt2 := packet.New()
 		data2 := &packet.MessagePktData{
-			SenderID:       senderId,
-			ReceiverID:     *form.ReceiverID,
-			UserID:         senderId,
+			UserID:         doc.UserID,
+			SenderID:       doc.SenderID,
+			ReceiverID:     doc.ReceiverID,
+			GroupID:        doc.GroupID,
 			ConversationID: doc.ConversationID,
 			Type:           *form.Type,
 			Text:           text,
@@ -208,19 +215,21 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			File:           file,
 			Custom:         custom,
 			Record:         record,
-			Timestamp:      *form.Timestamp,
+			Timestamp:      doc.Timestamp,
 			IsSelf:         0,
 			IsRead:         0,
 			IsPeerRead:     1,
-			Sequence:       seq,
-			CreateAt:       doc.CreateTs,
+			Sequence:       doc.Sequence,
+			CreateAt:       doc.CreateAt,
 		}
 		pkt2.Set(packet.MessagePacketType, data2)
-		err = hub.Write2Conn(*form.ReceiverID, pkt2)
+		err = hub.Write2Conn(form.ReceiverID, pkt2)
 
 		ret := &sendResModel{
-			SenderID:       senderId,
-			ReceiverID:     *form.ReceiverID,
+			UserID:         doc.UserID,
+			SenderID:       doc.SenderID,
+			ReceiverID:     doc.ReceiverID,
+			GroupID:        doc.GroupID,
 			ConversationID: doc.ConversationID,
 			Type:           *form.Type,
 			Text:           form.Text,
@@ -230,12 +239,12 @@ func SendController(isAdmin bool) gin.HandlerFunc {
 			File:           form.File,
 			Custom:         form.Custom,
 			Record:         form.Record,
-			Timestamp:      *form.Timestamp,
+			Timestamp:      doc.Timestamp,
 			IsSelf:         1,
 			IsRead:         1,
 			IsPeerRead:     0,
-			Sequence:       seq,
-			CreateAt:       doc.CreateTs,
+			Sequence:       doc.Sequence,
+			CreateAt:       doc.CreateAt,
 		}
 		errno.NewS(ret).Reply(c)
 	}
